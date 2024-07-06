@@ -8,23 +8,48 @@ public class InMemoryAuthenticationProvider implements AuthenticationProvider {
         private String login;
         private String password;
         private String username;
+        private Integer role;
+        private boolean kick;
 
-        public User(String login, String password, String username) {
+        public User(String login, String password, String username, Integer role, boolean kick) {
             this.login = login;
             this.password = password;
             this.username = username;
+            this.role = role;
+            this.kick = kick;
+        }
+
+        public Integer getRole() {
+            return role;
         }
     }
 
     private Server server;
-    private List<User> users;
+    public List<User> users;
+
+    public List<User> getUsers() {
+        return users;
+    }
+
+    public enum Role {
+        USER(0),
+        ADMIN(1);
+
+        Integer id;
+
+
+        Role(Integer id) {
+            this.id = id;
+        }
+
+    }
 
     public InMemoryAuthenticationProvider(Server server) {
         this.server = server;
         this.users = new ArrayList<>();
-        this.users.add(new User("login1", "pass1", "bob"));
-        this.users.add(new User("login2", "pass2", "user2"));
-        this.users.add(new User("login3", "pass3", "user3"));
+        this.users.add(new User("login1", "pass1", "bob", Role.ADMIN.id, false));
+        this.users.add(new User("login2", "pass2", "user2", Role.USER.id, false));
+        this.users.add(new User("login3", "pass3", "user3", Role.USER.id, false));
     }
 
     @Override
@@ -77,7 +102,7 @@ public class InMemoryAuthenticationProvider implements AuthenticationProvider {
     }
 
     @Override
-    public boolean registration(ClientHandler clientHandler, String login, String password, String username) {
+    public boolean registration(ClientHandler clientHandler, String login, String password, String username, Integer role) {
         if (login.trim().length() < 3 || password.trim().length() < 6 || username.trim().length() < 1) {
             clientHandler.sendMessage("Логин 3+ символа, Пароль 6+ символов, Имя пользователя 1+ символ");
             return false;
@@ -90,10 +115,43 @@ public class InMemoryAuthenticationProvider implements AuthenticationProvider {
             clientHandler.sendMessage("Указанное имя пользователя уже занято");
             return false;
         }
-        users.add(new User(login, password, username));
+
+        users.add(new User(login, password, username, role, false));
         clientHandler.setUsername(username);
         server.subscribe(clientHandler);
         clientHandler.sendMessage("/regok " + username);
         return true;
     }
+
+    @Override
+    public boolean isAdmin(String username) {
+        for (User u : users) {
+            String thisUsername = u.username;
+            Integer thisRole = u.role;
+            if (u.username.equals(username) && u.role.equals(1)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public void kickOn(String username) {
+        for (User u : users) {
+            if (u.username.equals(username)) {
+                u.kick = true;
+            }
+        }
+    }
+
+    @Override
+    public boolean isKick(String username) {
+        for (User u : users) {
+            if (u.username.equals(username)) {
+                return u.kick;
+            }
+        }
+        return false;
+    }
+
 }

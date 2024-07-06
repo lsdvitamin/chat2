@@ -14,6 +14,15 @@ public class Server {
         return authenticationProvider;
     }
 
+    public ClientHandler getClient(String username) {
+        for (ClientHandler c : clients) {
+            if (c.getUsername().equals(username)) {
+                return (ClientHandler) c;
+            }
+        }
+        return null;
+    }
+
     public Server(int port) {
         this.port = port;
         this.clients = new ArrayList<>();
@@ -45,6 +54,10 @@ public class Server {
 
     public synchronized void broadcastMessage(String message) {
         for (ClientHandler c : clients) {
+            InMemoryAuthenticationProvider imap = new InMemoryAuthenticationProvider(null);
+            if (imap.isKick(c.getUsername())) {
+                break;
+            }
             c.sendMessage(message);
         }
     }
