@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Server {
+
     private int port;
     private List<ClientHandler> clients;
     private AuthenticationProvider authenticationProvider;
@@ -13,6 +14,7 @@ public class Server {
     public AuthenticationProvider getAuthenticationProvider() {
         return authenticationProvider;
     }
+
 
     public ClientHandler getClient(String username) {
         for (ClientHandler c : clients) {
@@ -26,7 +28,7 @@ public class Server {
     public Server(int port) {
         this.port = port;
         this.clients = new ArrayList<>();
-        this.authenticationProvider = new InMemoryAuthenticationProvider(this);
+        this.authenticationProvider = new InDatabeseAuthenticationProvider(this);
     }
 
     public void start() {
@@ -54,7 +56,7 @@ public class Server {
 
     public synchronized void broadcastMessage(String message) {
         for (ClientHandler c : clients) {
-            InMemoryAuthenticationProvider imap = new InMemoryAuthenticationProvider(null);
+            InDatabeseAuthenticationProvider imap = new InDatabeseAuthenticationProvider(null);
             if (imap.isKick(c.getUsername())) {
                 break;
             }
